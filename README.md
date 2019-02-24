@@ -51,3 +51,45 @@ curl -X POST \
 ```bash
 sls logs --function inStorePickupOrder --tail
 ```
+
+
+## Registering a BigCommerce Webhook
+
+```bash
+export STORE_HASH='store_hash';
+export STORE_CLIENT='store_api_client_id';
+export STORE_TOKEN='store_api_token';
+
+# Get the active webhooks -> returns an Array of Webhooks
+curl -X GET \
+  https://api.bigcommerce.com/stores/$STORE_HASH/v2/hooks \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -H "X-Auth-Client: ${STORE_CLIENT}" \
+  -H "X-Auth-Token: ${STORE_TOKEN}" \
+
+# Create a webhook -> returns a Webhook entity
+curl -X POST \
+  https://api.bigcommerce.com/stores/$STORE_HASH/v2/hooks \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -H "X-Auth-Client: ${STORE_CLIENT}" \
+  -H "X-Auth-Token: ${STORE_TOKEN}" \
+  -d '{
+   "scope": "store/order/created",
+   "destination": "GENERATED_SLS_WEBHOOK_URL",
+   "is_active": true,
+   "headers": {
+     "x-api-key": "GENERATED_API_GATEWAY_KEY"
+   }
+  }'
+
+# Delete a webhook -> returns the removed webhook entity
+# Replace WEB_HOOK_ID with your webhook's ID ;)
+curl -X DELETE \
+  https://api.bigcommerce.com/stores/$STORE_HASH/v2/hooks/WEB_HOOK_ID \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -H "X-Auth-Client: ${STORE_CLIENT}" \
+  -H "X-Auth-Token: ${STORE_TOKEN}" \
+```
