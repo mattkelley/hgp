@@ -1,0 +1,41 @@
+service:
+  name: hgp-store-webhooks
+
+plugins:
+  - '@hewmen/serverless-plugin-typescript'
+  - serverless-plugin-optimize
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  apiGateway:
+    apiKeySourceType: HEADER
+  apiKeys:
+    - inStorePickupWebhook
+
+package:
+  individually: true
+
+functions:
+  inStorePickupOrder:
+    handler: src/inStorePickup.handler
+    events:
+      - http:
+          path: /instore-pickup
+          method: post
+          private: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Verify-Sender
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+    environment:
+      STORE_CLIENT_ID: ${ssm:storeClientId~true}
+      STORE_ACCESS_TOKEN: ${ssm:storeAccessToken~true}
