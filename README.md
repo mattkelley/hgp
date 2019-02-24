@@ -52,6 +52,27 @@ curl -X POST \
 sls logs --function inStorePickupOrder --tail
 ```
 
+### Deployment
+```bash
+sls deploy
+
+# Returns the following:
+Service Information
+service: hgp-store-webhooks
+stage: dev
+region: us-east-1
+stack: hgp-store-webhooks-dev
+resources: 14
+api keys:
+  inStorePickupWebhook: SECRET_API_GATEWAY_KEY
+endpoints:
+  POST - https://LAMBDA_HASH.execute-api.us-east-1.amazonaws.com/dev/instore-pickup
+functions:
+  inStorePickupOrder: hgp-store-webhooks-dev-inStorePickupOrder
+layers:
+  None
+```
+Take note of the endpoint and API key, we will need it when creating the webhook.
 
 ## Registering a BigCommerce Webhook
 
@@ -77,10 +98,10 @@ curl -X POST \
   -H "X-Auth-Token: ${STORE_TOKEN}" \
   -d '{
    "scope": "store/order/created",
-   "destination": "GENERATED_SLS_WEBHOOK_URL",
+   "destination": "https://LAMBDA_HASH.execute-api.us-east-1.amazonaws.com/dev/instore-pickup",
    "is_active": true,
    "headers": {
-     "x-api-key": "GENERATED_API_GATEWAY_KEY"
+     "x-api-key": "SECRET_API_GATEWAY_KEY"
    }
   }'
 
