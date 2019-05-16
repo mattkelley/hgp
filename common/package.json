@@ -1,0 +1,25 @@
+{
+  "name": "common",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx tsc -b -w",
+    "build": "npx tsc -b",
+    "clean": "rm -r dist",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "supports-color": "6.1.0",
+    "typescript": "3.0.1"
+  },
+  "dependencies": {
+    "@types/bunyan": "1.8.5",
+    "@types/node": "11.9.5",
+    "axios": "0.18.0",
+    "bunyan": "1.8.12",
+    "config": "3.0.1"
+  }
+}
