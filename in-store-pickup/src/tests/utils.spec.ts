@@ -1,4 +1,4 @@
-import { obfuscateString, validateRequestBody } from '../utils';
+import { obfuscateString } from '../utils';
 
 describe('obfuscateString()', () => {
   it('Should obfuscate long strings', () => {

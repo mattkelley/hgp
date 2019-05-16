@@ -1,5 +1,5 @@
-import { BigCommerceClient } from '../clients';
-import { OrderStatus, ShippingMethod, OrderStatusId } from '../types/BigCommerce';
+import { BigCommerceClient } from '@common/clients';
+import { OrderStatus, ShippingMethod, OrderStatusId } from '@common/types/BigCommerce';
 import { logger, obfuscateString } from '../utils';
 
 export interface ServiceConfig {
@@ -10,7 +10,7 @@ export interface ServiceConfig {
   updateMode: boolean;
 }
 
-export class InStorePickupService {
+export class UpdateOrderService {
   storeClient: BigCommerceClient;
   private _config: ServiceConfig;
 
@@ -21,8 +21,9 @@ export class InStorePickupService {
       storeHash,
       clientId: storeClientId,
       clientToken: storeAccessToken,
+      logger,
     });
-    logger.debug('InStorePickup Service Config=[%j]', this.config);
+    logger.debug('UpdateOrderService Service Config=[%j]', this.config);
   }
 
   /**
@@ -66,7 +67,7 @@ export class InStorePickupService {
       // Only update orders if they are currently in awaiting fulfillment status
       if (order.status !== OrderStatus.AwaitingFulfillment) {
         logger.info(`Order status not compatible. OrderId=[%d] CurrentStatus=[%s]`, orderId, order.status);
-        return { processed: false, message: 'Order status is not compatible or may already be shipped' };
+        return { processed: false, message: 'Order status is not compatible or has already shipped' };
       }
 
       // Use this service in non-update mode to preview the change to an order
@@ -78,8 +79,8 @@ export class InStorePickupService {
 
       // Update the order status to "Shipped"
       const updatedOrder = await this.storeClient.updateOrderStatus(orderId, { newStatus: OrderStatusId.Shipped });
-      logger.info(`Successful updated Order=[%d] to NewStatus=[%s]`, orderId, updatedOrder.status);
-      return { processed: true, message: 'Updated InStore PickUp order' };
+      logger.info(`Successful update of OrderId=[%d] to NewStatus=[%s]`, orderId, updatedOrder.status);
+      return { processed: true, message: 'Updated In Store Pick Up order' };
     } catch (err) {
       logger.error({ err }, `Failed to update OrderId=[%d]`, orderId);
       throw err;

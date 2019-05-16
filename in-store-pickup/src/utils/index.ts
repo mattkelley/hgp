@@ -1,5 +1,7 @@
 import { get } from 'lodash';
 
+export * from './Response';
+
 export { logger } from './logger';
 
 /**
@@ -32,14 +34,3 @@ export function obfuscateString(str: string, visibleChars: number = 0): string {
   const obfuscated = str.slice(0, -visibleChars);
   return str.replace(obfuscated, '*'.repeat(obfuscated.length));
 }
-
-/**
- * Simple success http response factory
- */
-export const responseSuccess = () => ({ statusCode: 200 });
-
-/**
- * Simple error http response factory
- * @param message - Error message
- */
-export const responseFailure = (message: string) => ({ statusCode: 500, message });

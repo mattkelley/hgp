@@ -1,0 +1,62 @@
+service:
+  name: in-store-pickup
+
+# Add the serverless-webpack plugin
+plugins:
+  - serverless-webpack
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  apiGateway:
+    apiKeySourceType: HEADER
+  apiKeys:
+    - inStorePickupWebhook
+
+functions:
+  # Update BigCommerce Orders status if they have been marked for "In Store Pickup"
+  # Currently, we only listen for order "created" webhooks from BigCommerce
+  # In the future we could register additional listeners for when orders are updated or deleted.
+  onBigCommerceOrderCreatedWebhook:
+    handler: src/updateOrder/updateOrder.controller.handler
+    environment:
+      STORE_CLIENT_ID: ${ssm:storeClientId~true}
+      STORE_ACCESS_TOKEN: ${ssm:storeAccessToken~true}
+    events:
+      - http:
+          method: post
+          path: /update-pickup-orders
+          private: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Verify-Sender
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+  onBigCommerceOrderCreatedWebhook2:
+    handler: src/middle.handler
+    environment:
+      STORE_CLIENT_ID: ${ssm:storeClientId~true}
+      STORE_ACCESS_TOKEN: ${ssm:storeAccessToken~true}
+    events:
+      - http:
+          method: post
+          path: /test-middle
+          private: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Verify-Sender
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false

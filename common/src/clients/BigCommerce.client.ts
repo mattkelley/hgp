@@ -1,6 +1,13 @@
 import axios, { AxiosInstance } from 'axios';
-import { logger } from '../utils';
+import * as bunyan from 'bunyan';
 import { OrderDTO, OrderStatusDTO, ShippingAddressDTO } from '../dto/BigCommerce.dto';
+
+export interface ClientOptions {
+  storeHash: string;
+  clientId: string;
+  clientToken: string;
+  logger: bunyan;
+}
 
 export interface ClientConfig {
   storeHash: string;
@@ -11,10 +18,12 @@ export interface ClientConfig {
 export class BigCommerceClient {
   config: ClientConfig;
   axios: AxiosInstance;
+  logger: bunyan;
 
-  constructor(conf: ClientConfig) {
-    this.config = conf;
-    const { storeHash, clientId, clientToken } = this.config;
+  constructor(conf: ClientOptions) {
+    const { storeHash, clientId, clientToken } = conf;
+    this.logger = conf.logger;
+    this.config = { storeHash, clientId, clientToken };
     const headers = {
       'X-Auth-Client': clientId,
       'X-Auth-Token': clientToken,
@@ -33,12 +42,12 @@ export class BigCommerceClient {
    */
   async getOrderById(orderId: number): Promise<OrderDTO> {
     const requestPath = `/v2/orders/${orderId}`;
-    logger.info('Getting Order by Id=[%d] URLPath=[%s]', orderId, requestPath);
+    this.logger.info('Get Order by OrderId=[%d] URLPath=[%s]', orderId, requestPath);
     try {
       const req = await this.axios(requestPath);
       return req.data;
     } catch (err) {
-      logger.warn({ err }, 'Failed to get Order by Id=[%d]', orderId);
+      this.logger.warn({ err }, 'Failed to get Order by OrderId=[%d]', orderId);
       throw err;
     }
   }
@@ -49,12 +58,12 @@ export class BigCommerceClient {
    */
   async getOrderStatusById(status: number): Promise<OrderStatusDTO> {
     const requestPath = `/v2/order_statuses/${status}`;
-    logger.info('Getting OrderStatus by Id=[%d] URLPath=[%s]', status, requestPath);
+    this.logger.info('Get OrderStatus by StatusId=[%d] URLPath=[%s]', status, requestPath);
     try {
       const req = await this.axios(requestPath);
       return req.data;
     } catch (err) {
-      logger.warn({ err }, 'Failed to get OrderStatus by OrderStatusId=[%d]', status);
+      this.logger.warn({ err }, 'Failed to get OrderStatus by OrderStatusId=[%d]', status);
       throw err;
     }
   }
@@ -65,12 +74,12 @@ export class BigCommerceClient {
    */
   async getOrderShippingAddresses(orderId: number): Promise<ShippingAddressDTO[]> {
     const requestPath = `/v2/orders/${orderId}/shippingaddresses`;
-    logger.info('Get Order shipping addresses by OrderId=[%d] URLPath=[%s]', orderId, requestPath);
+    this.logger.info('Get Order shipping addresses by OrderId=[%d] URLPath=[%s]', orderId, requestPath);
     try {
       const req = await this.axios(requestPath);
       return req.data;
     } catch (err) {
-      logger.warn({ err }, 'Failed to get Order shipping addresses by OrderId=[%d]', orderId);
+      this.logger.warn({ err }, 'Failed to get Order shipping addresses by OrderId=[%d]', orderId);
       throw err;
     }
   }
@@ -82,7 +91,12 @@ export class BigCommerceClient {
    */
   async updateOrderStatus(orderId: number, conf: { newStatus: number }): Promise<OrderDTO> {
     const requestPath = `/v2/orders/${orderId}`;
-    logger.info('Put new Order status. OrderId=[%d] NewStatus=[%d] URLPath=[%s]', orderId, conf.newStatus, requestPath);
+    this.logger.info(
+      'Update Order status. OrderId=[%d] NewStatus=[%d] URLPath=[%s]',
+      orderId,
+      conf.newStatus,
+      requestPath,
+    );
     try {
       const req = await this.axios({
         method: 'put',
@@ -91,7 +105,7 @@ export class BigCommerceClient {
       });
       return req.data;
     } catch (err) {
-      logger.warn({ err }, `Failed to put Order status. OrderId=[${orderId}] NewStatus=[${conf.newStatus}]`);
+      this.logger.warn({ err }, `Failed to update Order status. OrderId=[${orderId}] NewStatus=[${conf.newStatus}]`);
       throw err;
     }
   }
