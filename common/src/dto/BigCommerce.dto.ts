@@ -149,3 +149,15 @@ export interface ShippingAddressDTO {
   };
   // form_fields: [];
 }
+
+export interface WebhookDTO {
+  id: number;
+  client_id: string;
+  store_hash: string;
+  scope: string;
+  destination: string;
+  headers: { [key: string]: string };
+  is_active: boolean;
+  created_at: number;
+  updated_at: number;
+}

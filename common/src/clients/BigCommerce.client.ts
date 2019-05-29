@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import * as bunyan from 'bunyan';
-import { OrderDTO, OrderStatusDTO, ShippingAddressDTO } from '../dto/BigCommerce.dto';
+import { OrderDTO, OrderStatusDTO, ShippingAddressDTO, WebhookDTO } from '../dto/BigCommerce.dto';
 
 export interface ClientOptions {
   storeHash: string;
@@ -13,6 +13,12 @@ export interface ClientConfig {
   storeHash: string;
   clientId: string;
   clientToken: string;
+}
+
+export interface RegisterWebhookConfig {
+  scope: string;
+  destination: string;
+  headers: { [key: string]: string };
 }
 
 export class BigCommerceClient {
@@ -34,6 +40,83 @@ export class BigCommerceClient {
       baseURL: `https://api.bigcommerce.com/stores/${storeHash}`,
       headers,
     });
+  }
+
+  /**
+   * Get all registered webhooks
+   */
+  async getAllWebhooks(): Promise<WebhookDTO[]> {
+    const requestPath = `/v2/hooks`;
+    this.logger.info('Get webhooks for StoreHash=[%s] URLPath=[%s]', this.config.storeHash, requestPath);
+    try {
+      const req = await this.axios(requestPath);
+      return req.data;
+    } catch (err) {
+      this.logger.warn({ err }, 'Failed to get webhooks for StoreHash=[%s]', this.config.storeHash);
+      throw err;
+    }
+  }
+
+  /**
+   * Register a BigCommerce webhook
+   * @param [conf.scope] - The webhooks scope e.g /stores/order/created
+   * @param [conf.destination] - The webhook URL destination to send POST request
+   * @param [conf.headers] - The headers to be included in the POST request to destination
+   * @returns [BigCommerceWebhookDTO] - The registered webhook
+   */
+  async registerWebhook(conf: RegisterWebhookConfig): Promise<WebhookDTO> {
+    const { scope, destination, headers } = conf;
+    const requestPath = '/v2/hooks';
+    this.logger.info(
+      'Register webhook Scope=[%s] Destination=[%s] for StoreHash=[%s] URLPath=[%s]',
+      scope,
+      destination,
+      this.config.storeHash,
+      requestPath,
+    );
+    const data = { scope, destination, headers, is_active: true };
+    try {
+      const req = await this.axios({ method: 'post', url: requestPath, data });
+      return req.data;
+    } catch (err) {
+      // Note: BigCommerce returns a 400 error if the webhook is considered a "duplicate"
+      // Could handle that error in the future, as we should probably not throw.
+      this.logger.warn({ err }, 'Failed to register Webhook for StoreHash=[%s]', this.config.storeHash);
+      throw err;
+    }
+  }
+
+  /**
+   * Remove a BigCommerce webhook by Id
+   * @param id - The webhook Id to remove
+   * @returns [BigCommerceWebhookDTO] - The removed webhook
+   */
+  async removeWebhookById(id: string): Promise<WebhookDTO> {
+    const requestPath = `/v2/hooks/${id}`;
+    this.logger.info('Remove WebhookId=[%d] for StoreHash=[%s] URLPath=[%s]', id, this.config.storeHash, requestPath);
+    try {
+      const req = await this.axios.delete(requestPath);
+      return req.data;
+    } catch (err) {
+      this.logger.warn({ err }, 'Failed to remove WebhookId=[%d] for StoreHash=[%s]', id, this.config.storeHash);
+      throw err;
+    }
+  }
+
+  /**
+   * Remove all the registered BigCommerce webhooks
+   * @returns [BigCommerceWebhookDTO][] - The removed webhooks
+   */
+  async removeAllWebhooks(): Promise<WebhookDTO[]> {
+    this.logger.info('Removing all webhooks for StoreHash=[%s]', this.config.storeHash);
+    const hooks = await this.getAllWebhooks();
+    const removedHooks: WebhookDTO[] = [];
+    for (const hook of hooks) {
+      const resp = await this.removeWebhookById(`${hook.id}`);
+      removedHooks.push(resp);
+    }
+    this.logger.info(`Removed Total=[%d] webhooks for StoreHash=[%s]`, removedHooks.length, this.config.storeHash);
+    return removedHooks;
   }
 
   /**
