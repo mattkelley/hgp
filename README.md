@@ -1,116 +1,20 @@
 # hgp
-This repo is a serverless project for my good friend Chris at Hungry Ghost Press.
+This [monorepo](https://medium.com/@mattklein123/monorepos-please-dont-e9a279be011b) is a collection of scripts, CLIs, and services for my good friends at [Hungry Ghost Press](https://hungryghostpress.com/). Each sub-directory (or project) will generally consist of it's own `package.json` or equivalent package manager config file. The `common` directory enables code sharing across the sub-directories thanks to [project references](https://www.typescriptlang.org/docs/handbook/project-references.html) in Typescript. Feature requests and bugs are tracked in [Github Issues](https://github.com/mattkelley/hgp/issues).
 
-## Running the app locally
+## Install
 
-```bash
-npm start
-```
-
-### Skiping cache invalidation
-
-Skiping cache invalidation is the same behavior as a deployed function
+This project requires Node.js (and npm) to be installed on your system at a version reasonably close to `v8.10.0`. There is an [nvm](https://github.com/nvm-sh/nvm) file at the root of the repo for convenience. I use Node.js `v8.10.0` because its currently used by AWS Lambda. It is also helpful to have [bunyan](https://www.npmjs.com/package/bunyan) installed globally, as the CLIs and services use it for logging.
 
 ```bash
-npm start -- --skipCacheInvalidation
+git clone git@github.com:mattkelley/hgp.git && cd hgp
+nvm use # optional, if you have nvm installed
+npm i bunyan -G # optional, nice to have to pipe CLI output
+npm install
 ```
+**Note:** For install instructions for an individual service or CLI, see the project's README.
 
-## Deploy
+## Projects
 
-In order to deploy the endpoint, simply run:
-
-```bash
-sls deploy
-```
-
-## Usage
-
-Send an HTTP request directly to the endpoint using a tool like curl
-
-```bash
-curl -X POST \
-  http://localhost:3002/instore-pickup \
-  -H 'Accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -H 'x-api-key: 978testkey' \
-  -d '{
-  "scope": "store/order/created",
-  "store_id": "1000060598",
-  "data": {
-    "type": "order",
-    "id": 2971
-  },
-  "hash": "e3d89eb52d7e49ec279bbd0cdb3842e20bbc9213",
-  "created_at": 1549832453,
-  "producer": "stores/plbed37zdn"
-}'
-```
-
-## Tail logs
-
-```bash
-sls logs --function inStorePickupOrder --tail
-```
-
-### Deployment
-```bash
-sls deploy
-
-# Returns the following:
-Service Information
-service: hgp-store-webhooks
-stage: dev
-region: us-east-1
-stack: hgp-store-webhooks-dev
-resources: 14
-api keys:
-  inStorePickupWebhook: SECRET_API_GATEWAY_KEY
-endpoints:
-  POST - https://LAMBDA_HASH.execute-api.us-east-1.amazonaws.com/dev/instore-pickup
-functions:
-  inStorePickupOrder: hgp-store-webhooks-dev-inStorePickupOrder
-layers:
-  None
-```
-Take note of the endpoint and API key, we will need it when creating the webhook.
-
-## Registering a BigCommerce Webhook
-
-```bash
-export STORE_HASH='store_hash';
-export STORE_CLIENT='store_api_client_id';
-export STORE_TOKEN='store_api_token';
-
-# Get the active webhooks -> returns an Array of Webhooks
-curl -X GET \
-  https://api.bigcommerce.com/stores/$STORE_HASH/v2/hooks \
-  -H "Accept: application/json" \
-  -H "Content-Type: application/json" \
-  -H "X-Auth-Client: ${STORE_CLIENT}" \
-  -H "X-Auth-Token: ${STORE_TOKEN}" \
-
-# Create a webhook -> returns a Webhook entity
-curl -X POST \
-  https://api.bigcommerce.com/stores/$STORE_HASH/v2/hooks \
-  -H "Accept: application/json" \
-  -H "Content-Type: application/json" \
-  -H "X-Auth-Client: ${STORE_CLIENT}" \
-  -H "X-Auth-Token: ${STORE_TOKEN}" \
-  -d '{
-   "scope": "store/order/created",
-   "destination": "https://LAMBDA_HASH.execute-api.us-east-1.amazonaws.com/dev/instore-pickup",
-   "is_active": true,
-   "headers": {
-     "x-api-key": "SECRET_API_GATEWAY_KEY"
-   }
-  }'
-
-# Delete a webhook -> returns the removed webhook entity
-# Replace WEB_HOOK_ID with your webhook's ID ;)
-curl -X DELETE \
-  https://api.bigcommerce.com/stores/$STORE_HASH/v2/hooks/WEB_HOOK_ID \
-  -H "Accept: application/json" \
-  -H "Content-Type: application/json" \
-  -H "X-Auth-Client: ${STORE_CLIENT}" \
-  -H "X-Auth-Token: ${STORE_TOKEN}" \
-```
+* ["In-Store Pickup" service](./in-store-pickup/README.md) - Process BigCommerce orders marked for In-Store pickup
+* [BigCommerce CLI](./big-commerce-cli/README.md) - BigCommerce order and webhook operations
+* [common](./common/README.md) - DTOs, Enums, Entities, and shared clients e.g [`BigCommerceApiClient`](./common/src/clients/BigCommerce.client.ts)
