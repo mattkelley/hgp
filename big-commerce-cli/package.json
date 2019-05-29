@@ -1,0 +1,66 @@
+{
+  "name": "big-commerce-cli",
+  "description": "A BigCommerce CLI for HGP",
+  "version": "1.0.0",
+  "author": "Matt Kelley @mattkelley",
+  "bin": {
+    "bigcommerce": "./bin/run"
+  },
+  "bugs": "https://github.com/mattkelley/hgp/issues",
+  "dependencies": {
+    "@oclif/command": "1.5.10",
+    "@oclif/config": "1.12.8",
+    "@oclif/plugin-help": "2.1.6",
+    "@types/bunyan": "1.8.6",
+    "bcrypt": "3.0.6",
+    "bunyan": "1.8.12",
+    "cli-ux": "5.2.1",
+    "tsconfig-paths": "3.8.0",
+    "tslib": "1.9.3"
+  },
+  "devDependencies": {
+    "@oclif/dev-cli": "1.21.2",
+    "@types/node": "10.12.27",
+    "globby": "8.0.2",
+    "ts-node": "8.0.2",
+    "typescript": "3.3.3333"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "files": [
+    "/bin",
+    "/lib",
+    "/npm-shrinkwrap.json",
+    "/oclif.manifest.json"
+  ],
+  "homepage": "https://github.com/mattkelley/hgp",
+  "keywords": [
+    "oclif"
+  ],
+  "license": "MIT",
+  "main": "lib/index.js",
+  "oclif": {
+    "commands": "./lib/commands",
+    "topics": {
+      "configure:index": {
+        "description": "Create your BigCommerce CLI config"
+      },
+      "hooks:index": {
+        "description": "List the registered webhooks"
+      }
+    },
+    "bin": "bigcommerce",
+    "plugins": [
+      "@oclif/plugin-help"
+    ]
+  },
+  "repository": "mattkelley/hgp",
+  "scripts": {
+    "postpack": "rm -f oclif.manifest.json",
+    "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
+    "test": "echo NO TESTS",
+    "version": "oclif-dev readme && git add README.md"
+  },
+  "types": "lib/index.d.ts"
+}

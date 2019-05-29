@@ -1,0 +1,8 @@
+#!/usr/bin/env node
+
+const tsconfigPaths = require('../tsconfig-path-bootstrap');
+
+require('@oclif/command').run()
+  .then(require('@oclif/command/flush'))
+  .then(tsconfigPaths.done)
+  .catch(require('@oclif/errors/handle'))
