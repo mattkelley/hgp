@@ -18,7 +18,7 @@
   "dependencies": {
     "@types/bunyan": "1.8.5",
     "@types/node": "11.9.5",
-    "axios": "0.18.0",
+    "axios": "0.18.1",
     "bunyan": "1.8.12",
     "config": "3.0.1"
   }
