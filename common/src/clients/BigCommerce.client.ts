@@ -59,10 +59,10 @@ export class BigCommerceClient {
 
   /**
    * Register a BigCommerce webhook
-   * @param [conf.scope] - The webhooks scope e.g /stores/order/created
-   * @param [conf.destination] - The webhook URL destination to send POST request
-   * @param [conf.headers] - The headers to be included in the POST request to destination
-   * @returns [BigCommerceWebhookDTO] - The registered webhook
+   * @param conf.scope - The webhooks scope e.g /stores/order/created
+   * @param conf.destination - The webhook URL destination to send POST request
+   * @param conf.headers - The headers to be included in the POST request to destination
+   * @returns BigCommerceWebhookDTO - The registered webhook
    */
   async registerWebhook(conf: RegisterWebhookConfig): Promise<WebhookDTO> {
     const { scope, destination, headers } = conf;
