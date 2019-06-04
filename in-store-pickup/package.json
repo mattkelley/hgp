@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@types/config": "0.0.34",
-    "axios": "0.18.0",
+    "axios": "0.18.1",
     "bunyan": "1.8.12",
     "class-transformer": "0.2.2",
     "class-validator": "0.9.1",
