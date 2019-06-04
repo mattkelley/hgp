@@ -1,5 +1,5 @@
 import { BigCommerceClient } from '@common/clients';
-import { OrderStatus, ShippingMethod, OrderStatusId } from '@common/types/BigCommerce';
+import { ShippingMethod, OrderStatusId } from '@common/types/BigCommerce';
 import { logger, obfuscateString } from '../utils';
 
 export interface ServiceConfig {
@@ -7,7 +7,6 @@ export interface ServiceConfig {
   storeAccessToken: string;
   storeHash: string;
   orderId: number;
-  updateMode: boolean;
 }
 
 export class UpdateOrderService {
@@ -46,44 +45,47 @@ export class UpdateOrderService {
    * The main "execute" service method.
    */
   async exec(): Promise<{ processed: boolean; message: string }> {
-    const { orderId, updateMode } = this.config;
+    const { orderId } = this.config;
 
-    const orderPromise = this.storeClient.getOrderById(orderId);
-    // Shipping addresses endpoint returns an array of addresses. We are only concerned with the first item.
-    const shippingAddressPromise = this.storeClient
-      .getOrderShippingAddresses(orderId)
-      .then(addresses => (Array.isArray(addresses) ? addresses.shift() : addresses));
-
+    // Get the Order to see if it has the correct status
     try {
-      const [order, shippingAddress] = await Promise.all([orderPromise, shippingAddressPromise]);
+      const order = await this.storeClient.getOrderById(orderId);
+      // The order is created but has not reached AwaitingFulfillment status
+      if (order.status_id < OrderStatusId.AwaitingFulfillment) {
+        return { processed: false, message: 'OrderStatus is less than AwaitingFulfillment' };
+      }
+      // The order is created and has progressed past AwaitingFulfillment status
+      if (order.status_id > OrderStatusId.AwaitingFulfillment) {
+        return { processed: false, message: 'OrderStatus is greater than AwaitingFulfillment' };
+      }
+    } catch (err) {
+      logger.error({ err }, `Failed to update OrderId=[%d]`, orderId);
+      return { processed: false, message: err.message };
+    }
 
+    // Get the Order ShippingAddresses to see if the Order is marked for "In Store Pickup"
+    try {
+      const addresses = await this.storeClient.getOrderShippingAddresses(orderId);
+      const shippingAddress = Array.isArray(addresses) ? addresses.shift() : addresses;
       // Only update orders that are marked as InStore pickup
       if (shippingAddress.shipping_method !== ShippingMethod.InStorePickUp) {
         const method = shippingAddress.shipping_method;
-        logger.info(`Order shipping not compatible. OrderId=[%d] ShippingMethod=[%s]`, orderId, method);
+        logger.info(`ShippingMethod not compatible. OrderId=[%d] ShippingMethod=[%s]`, orderId, method);
         return { processed: false, message: 'Order shipping method is not compatible' };
       }
+    } catch (err) {
+      logger.error({ err }, `Failed to update OrderId=[%d]`, orderId);
+      return { processed: false, message: err.message };
+    }
 
-      // Only update orders if they are currently in awaiting fulfillment status
-      if (order.status !== OrderStatus.AwaitingFulfillment) {
-        logger.info(`Order status not compatible. OrderId=[%d] CurrentStatus=[%s]`, orderId, order.status);
-        return { processed: false, message: 'Order status is not compatible or has already shipped' };
-      }
-
-      // Use this service in non-update mode to preview the change to an order
-      if (!updateMode) {
-        const msg = `[Non Update Mode] Would have updated OrderId=[%d] Status=[%s] ShippingMethod=[%s]`;
-        logger.info(msg, orderId, order.status, shippingAddress.shipping_method);
-        return { processed: false, message: 'Non-update mode' };
-      }
-
-      // Update the order status to "Shipped"
+    // Update the Order to "shipped"
+    try {
       const updatedOrder = await this.storeClient.updateOrderStatus(orderId, { newStatus: OrderStatusId.Shipped });
       logger.info(`Successful update of OrderId=[%d] to NewStatus=[%s]`, orderId, updatedOrder.status);
       return { processed: true, message: 'Updated In Store Pick Up order' };
     } catch (err) {
       logger.error({ err }, `Failed to update OrderId=[%d]`, orderId);
-      throw err;
+      return { processed: false, message: err.message };
     }
   }
 }

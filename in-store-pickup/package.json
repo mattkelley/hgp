@@ -59,7 +59,10 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@common/(.*)$": "<rootDir>/../../common/src/$1"
+    }
   },
   "author": "Matt Kelley",
   "license": "MIT"

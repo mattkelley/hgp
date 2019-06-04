@@ -1,15 +1,3 @@
-export interface InStorePickUpRequestBody {
-  scope: string;
-  store_id: string;
-  data: {
-    type: string;
-    id: number;
-  };
-  hash: string;
-  created_at: number;
-  producer: string;
-}
-
 export interface BillingAddressDTO {
   first_name: string;
   last_name: string;
@@ -77,7 +65,7 @@ export interface OrderDTO {
   discount_amount: string;
   coupon_discount: string;
   shipping_address_count: number;
-  is_deleted: true;
+  is_deleted: boolean;
   ebay_order_id: string;
   cart_id: string;
   billing_address: BillingAddressDTO;

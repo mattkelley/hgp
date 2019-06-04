@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import * as bunyan from 'bunyan';
 import { OrderDTO, OrderStatusDTO, ShippingAddressDTO, WebhookDTO } from '../dto/BigCommerce.dto';
+import { OrderStatusId } from '../types/BigCommerce';
 
 export interface ClientOptions {
   storeHash: string;
@@ -59,10 +60,10 @@ export class BigCommerceClient {
 
   /**
    * Register a BigCommerce webhook
-   * @param [conf.scope] - The webhooks scope e.g /stores/order/created
-   * @param [conf.destination] - The webhook URL destination to send POST request
-   * @param [conf.headers] - The headers to be included in the POST request to destination
-   * @returns [BigCommerceWebhookDTO] - The registered webhook
+   * @param conf.scope - The webhooks scope e.g /stores/order/created
+   * @param conf.destination - The webhook URL destination to send POST request
+   * @param conf.headers - The headers to be included in the POST request to destination
+   * @returns BigCommerceWebhookDTO - The registered webhook
    */
   async registerWebhook(conf: RegisterWebhookConfig): Promise<WebhookDTO> {
     const { scope, destination, headers } = conf;
@@ -136,7 +137,16 @@ export class BigCommerceClient {
   }
 
   /**
-   * Get a BigCommerce OrderStatus by Id
+   * Get a BigCommerce Order Status Id
+   * @param orderId - The order Id
+   */
+  async getOrderStatus(orderId: number): Promise<OrderStatusId> {
+    const { status_id } = await this.getOrderById(orderId);
+    return status_id;
+  }
+
+  /**
+   * Get a BigCommerce OrderStatus type by Id
    * @param status - The order status id
    */
   async getOrderStatusById(status: number): Promise<OrderStatusDTO> {

@@ -42,4 +42,5 @@ export enum OrderStatusId {
  */
 export enum OrderScope {
   created = 'store/order/created',
+  statusUpdated = 'store/order/statusUpdated',
 }

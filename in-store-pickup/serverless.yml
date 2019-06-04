@@ -1,53 +1,31 @@
 service:
   name: in-store-pickup
 
-# Add the serverless-webpack plugin
 plugins:
   - serverless-webpack
   - serverless-offline
 
 provider:
   name: aws
+  stage: ${opt:stage, 'dev'}
   runtime: nodejs8.10
   apiGateway:
     apiKeySourceType: HEADER
   apiKeys:
-    - inStorePickupWebhook
+    - ${self:provider.stage}-inStorePickup
 
 functions:
-  # Update BigCommerce Orders status if they have been marked for "In Store Pickup"
-  # Currently, we only listen for order "created" webhooks from BigCommerce
-  # In the future we could register additional listeners for when orders are updated or deleted.
-  onBigCommerceOrderCreatedWebhook:
-    handler: src/updateOrder/updateOrder.controller.handler
+  # Update BigCommerce order status to "Shipped" if it has been marked for "In Store Pickup"
+  onBigCommerceOrderUpdatedWebhook:
+    handler: src/updateOrder/updateOrder.handler
     environment:
-      STORE_CLIENT_ID: ${ssm:storeClientId~true}
-      STORE_ACCESS_TOKEN: ${ssm:storeAccessToken~true}
+      # either ssm:dev-inStorePickup-storeClientId or ssm:production-inStorePickup-storeClientId
+      STORE_CLIENT_ID: ${ssm:${self:provider.stage}-inStorePickup-storeClientId~true}
+      STORE_ACCESS_TOKEN: ${ssm:${self:provider.stage}-inStorePickup-storeAccessToken~true}
     events:
       - http:
           method: post
-          path: /update-pickup-orders
-          private: true
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - X-Verify-Sender
-              - X-Amz-Date
-              - Authorization
-              - X-Api-Key
-              - X-Amz-Security-Token
-              - X-Amz-User-Agent
-            allowCredentials: false
-  onBigCommerceOrderCreatedWebhook2:
-    handler: src/middle.handler
-    environment:
-      STORE_CLIENT_ID: ${ssm:storeClientId~true}
-      STORE_ACCESS_TOKEN: ${ssm:storeAccessToken~true}
-    events:
-      - http:
-          method: post
-          path: /test-middle
+          path: /order-updated
           private: true
           cors:
             origin: '*'
